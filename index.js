@@ -19,7 +19,9 @@ httpserver.listen(config.websocket.port, function(){
 
 // Sends the default playlist to anyone listening
 io.on('connection', function(socket) {
+	console.log('new connection');
 	youtube.playlist(config.youtube.defaultPlaylist).then(function(data){
+		console.log(data);
 		socket.emit('playlist', { 'data' : data });
 	});
 });
