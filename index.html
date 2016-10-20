@@ -22,11 +22,9 @@
 		},
 
 		'later' : function(delay){
-			return function(){
-				return new Promise(function(resolve){
-					window.setTimeout(resolve, delay);
-				});
-			};
+			return new Promise(function(resolve){
+				window.setTimeout(resolve, delay);
+			});
 		},
 
 		'resolver' : function(){
@@ -39,29 +37,32 @@
 	};
 
 	function SMSDJ(){
-		this.defaultPlaylist = [],
+		this.defaultPlaylist = [{'id' : 'dLHtV_S2HZw'}],
 		this.defaultBackup = undefined;
 		this.requests = [];
 
+		var self = this;
 		this.player = new YT.Player('player', {
-	        height: '390',
-	        width: '640',
 	        events: {
-	        	'onPlayerReady' : function(){ console.log('ready'); },
-	            'onStateChange': this.playerStateChange.bind(this)
+	        	'onStateChange': this.playerStateChange.bind(this)
 	        }
 	    });
+
+	    this.videos = document.getElementById('videos');
 	};
 
 	SMSDJ.prototype.dequeue = function(){
-		if(this.requests.length === 0) return this.defaultPlaylist.unshift();
-		return this.requests.unshift();	
+		if(this.requests.length === 0) return this.defaultPlaylist.shift();
+		var data = this.requests.shift();	
+		data.html.destroy();
+		return data.request;
 	};
 
 	SMSDJ.prototype.next = function(){
-		var videoid = this.dequeue();
-		this.player.loadVideoById(videoid);
-		this.player.playVideo();
+		var video = this.dequeue();
+		this.player.loadVideoById({
+			'videoId' : video.id
+		});
 	};
 
 	SMSDJ.prototype.playerStateChange = function(event){
@@ -76,7 +77,51 @@
 	};
 
 	SMSDJ.prototype.enqueue = function(what){
-		this.requests.push(what);
+		var item = new Item(what);
+		this.requests.push({
+			'html' : item,
+			'request' : what
+		});
+		this.videos.appendChild(item.html());
+		item.fadein();
+		return item;
+	};
+
+	function Item(data){
+		this.container = util.node('li', {'class' : 'out'});
+		this.img = util.node('img', {'src' : data.thumb});
+		this.data = util.node('div', {'class' : 'data'});
+		this.name = util.node('div', {'class' : 'name'}, data.name);
+		this.phone = util.node('div', {'class' : 'phone'}, data.from);
+		this.data.appendChild(this.name);
+		this.data.appendChild(this.phone);
+		this.container.appendChild(this.img);
+		this.container.appendChild(this.data);
+	
+		this.fadein();
+	};
+
+	Item.prototype.fadein = function(){
+		var self = this;
+		return util.later(100).then(function(){
+			self.container.setAttribute('class', '');	
+		}).then(function(){ return util.later(800) });
+	};
+
+	Item.prototype.fadeout = function(){
+		this.container.setAttribute('class', 'out');
+		return util.later(800);
+	};
+
+	Item.prototype.destroy = function(){
+		var self = this;
+		return this.fadeout().then(function(){
+			try{ self.container.parentNode.removeChild(self.container); }catch(e){}
+		});
+	};
+
+	Item.prototype.html = function(){
+		return this.container;
 	};
 
 	var dj;
@@ -92,23 +137,119 @@
 		var socket = io();
 
 		console.log('everything is ready');
-		dj = new SMSDJ();
+		window.dj = new SMSDJ();
 
 		socket.on('playlist', function(data) {
-            console.log(data);
+            dj.setDefault(data.data);
         });
 
         socket.on('request', function(data) {
-            console.log(data);
+        	console.log('sms', data);
+            dj.enqueue(data);
         });
+
+        window.setTimeout(function(){
+            dj.next();
+        }, 3000);
 	});        
 
 	</script>
-	<style></style>
+	<style>
+
+		@import url('https://fonts.googleapis.com/css?family=News+Cycle:700');
+		
+		*{ margin: 0; padding: 0; }
+
+		body{
+			display: flex;
+			height: 100vh;
+			width: 100vw;
+			font-family: 'News Cycle';
+			overflow: hidden;
+		}
+
+		#list{
+			width: 30em;
+			background: #DDD;
+		}
+
+		#list ol, #list li{
+			list-style: none; 
+		}
+
+		#player{
+			flex-grow: 1;
+			height: 100vh;
+		}
+
+		#toolbar{
+			height: 5em;
+			width: 100%;
+			background: #EEE;
+			display: flex;
+			box-shadow: 0 0 2em rgba(0,0,0,0.05), 0 0 3em rgba(0,0,0,0.05);
+		}
+
+		#logo{
+			width: 5em;
+			height: 5em;
+			box-sizing: border-box;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		#logo img{
+			height: 3em;
+			opacity: 0.5;
+		}
+
+		#tools{
+			flex-grow: 1;
+		}
+
+		#videos li{
+			height: 5em;
+			display: flex;
+			position: relative;
+			left: 0;
+			transition: left 800ms ease-in-out;
+		}
+
+		#videos li.out{
+			left: 60em;
+		}
+
+		#videos li img{
+			height: 5em;
+		}
+
+		#videos li .data{
+			display: flex;
+			flex-direction: column;
+			flex-grow: 1;
+			justify-content: center;
+			box-sizing: border-box;
+			padding-left: 1em;
+			border-bottom: 1px solid rgba(0,0,0,0.075);			
+			border-top: 1px solid rgba(255,255,255,0.1);
+		}
+
+		#videos li:first-child .data{
+			border-top: none;
+		}
+
+		#videos li .name{
+		}
+
+		#videos li .phone{
+			color: rgba(0,0,0,0.3);
+			font-size: 0.8em;
+		}
+
+	</style>
 </head>
-<body>
-	<iframe id="player" type="text/html" width="640" height="390"
-  src="http://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1&origin=http://example.com"
-  frameborder="0"></iframe>
-</body>
+<body><div id="player"></div>
+<div id="list"><div id="toolbar"><div id="tools"></div>
+<div id="logo"><img src="logo.png" alt=""></div></div><ol id="videos"></ol></div></body>
 </html>
