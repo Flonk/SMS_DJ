@@ -148,6 +148,10 @@
             dj.enqueue(data);
         });
 
+        document.getElementById('skipperino').addEventListener('click', function(){
+        	dj.next();
+        });
+
         window.setTimeout(function(){
             dj.next();
         }, 3000);
@@ -166,6 +170,13 @@
 			width: 100vw;
 			font-family: 'News Cycle';
 			overflow: hidden;
+
+			-webkit-touch-callout: none;
+		    -webkit-user-select: none;
+		    -khtml-user-select: none;
+		    -moz-user-select: none;
+		    -ms-user-select: none;
+		    user-select: none;
 		}
 
 		#list{
@@ -205,7 +216,11 @@
 		}
 
 		#tools{
-			flex-grow: 1;
+			flex-grow: 1;			
+			display: flex;
+			align-items: center;
+			padding: 1em;
+			box-sizing: border-box;
 		}
 
 		#videos li{
@@ -247,9 +262,29 @@
 			font-size: 0.8em;
 		}
 
+		.button{
+			border: 1px solid #CCC;
+			border-bottom-width: 8px;
+			background: #DDD;
+			border-top-left-radius: 2px;
+			border-top-right-radius: 2px;
+			padding: 0.4em;
+			color: #444;
+			text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+			transition: border-bottom-width 40ms linear, top 40ms linear;
+			position: relative;
+			top: 0;
+			cursor: pointer;
+		}
+
+		.button:active{
+			border-bottom-width: 1px;
+			top: 6px;
+		}
+
 	</style>
 </head>
 <body><div id="player"></div>
-<div id="list"><div id="toolbar"><div id="tools"></div>
+<div id="list"><div id="toolbar"><div id="tools"><div class='button' id='skipperino'>Skip this song</div></div>
 <div id="logo"><img src="logo.png" alt=""></div></div><ol id="videos"></ol></div></body>
 </html>
