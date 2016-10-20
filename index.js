@@ -8,8 +8,17 @@ var config = require('./config.json'),
 
 // Sends index.html to anyone visiting
 var httpserver = http.createServer(function(req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end(fs.readFileSync(__dirname + '/index.html'));
+
+	if(req.url === '/'){
+		res.writeHead(200, {'Content-Type': 'text/html'});
+    	res.end(fs.readFileSync(__dirname + '/index.html'));	
+	}
+
+	if(req.url === '/favicon.ico' || req.url === '/logo.png'){
+		res.writeHead(200, {'Content-Type': 'image/png'});
+    	res.end(fs.readFileSync(__dirname + '/logo.png'));
+	}
+    
 });
 
 var io = socketio.listen(httpserver);
