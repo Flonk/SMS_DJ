@@ -1,5 +1,5 @@
 var http = require('http'),
-    url = require('url'),
+    url = require('url');
     
 module.exports = (function(){
 
