@@ -53,9 +53,3 @@ module.exports = (function(){
 	};
 
 })();
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> origin/master
