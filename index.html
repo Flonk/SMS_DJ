@@ -6,9 +6,93 @@
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 	<script>
 
-	window.addEventListener('DOMContentLoaded', function(){
+	var tag = document.createElement('script');
 
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+
+	util = {
+		'node' : function(tag, attr, inner){
+			var e = document.createElement(tag || 'div');
+			if(attr) Object.keys(attr).forEach(function(key){ e.setAttribute(key, attr[key]); });
+			if(inner) e.innerText = inner;
+			return e;
+		},
+
+		'later' : function(delay){
+			return function(){
+				return new Promise(function(resolve){
+					window.setTimeout(resolve, delay);
+				});
+			};
+		},
+
+		'resolver' : function(){
+			var r, p = new Promise(function(resolve){ r = resolve; });
+			return {
+				'promise' : p,
+				'resolve' : r
+			};
+		}
+	};
+
+	function SMSDJ(){
+		this.defaultPlaylist = [],
+		this.defaultBackup = undefined;
+		this.requests = [];
+
+		this.player = new YT.Player('player', {
+	        height: '390',
+	        width: '640',
+	        events: {
+	        	'onPlayerReady' : function(){ console.log('ready'); },
+	            'onStateChange': this.playerStateChange.bind(this)
+	        }
+	    });
+	};
+
+	SMSDJ.prototype.dequeue = function(){
+		if(this.requests.length === 0) return this.defaultPlaylist.unshift();
+		return this.requests.unshift();	
+	};
+
+	SMSDJ.prototype.next = function(){
+		var videoid = this.dequeue();
+		this.player.loadVideoById(videoid);
+		this.player.playVideo();
+	};
+
+	SMSDJ.prototype.playerStateChange = function(event){
+		if(event.data === YT.PlayerState.ENDED){
+			this.next();
+		};
+	}
+
+	SMSDJ.prototype.setDefault = function(data){
+		this.defaultBackup = data.slice();
+		this.defaultPlaylist = data.slice();
+	};
+
+	SMSDJ.prototype.enqueue = function(what){
+		this.requests.push(what);
+	};
+
+	var dj;
+
+	var YTReady = util.resolver(),
+	    DOMReady = util.resolver();
+
+
+	function onYouTubeIframeAPIReady(){ YTReady.resolve(); };
+	window.addEventListener('DOMContentLoaded', function(){ DOMReady.resolve(); });
+
+	Promise.all([YTReady.promise, DOMReady.promise]).then(function(){
 		var socket = io();
+
+		console.log('everything is ready');
+		dj = new SMSDJ();
 
 		socket.on('playlist', function(data) {
             console.log(data);
@@ -17,13 +101,14 @@
         socket.on('request', function(data) {
             console.log(data);
         });
-
-	});
+	});        
 
 	</script>
 	<style></style>
 </head>
 <body>
-	
+	<iframe id="player" type="text/html" width="640" height="390"
+  src="http://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1&origin=http://example.com"
+  frameborder="0"></iframe>
 </body>
 </html>
