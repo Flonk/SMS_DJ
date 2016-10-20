@@ -23,7 +23,7 @@ module.exports = (function(){
         });
 
 
-        server.listen(port);
-    }
+        server.listen(port, function(){ console.log('listening'); });
+    };
 
-});
+})();
