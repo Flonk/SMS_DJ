@@ -23,7 +23,9 @@ module.exports = (function(){
         });
 
 
-        server.listen(port, function(){ console.log('listening'); });
+        server.listen(port, function(){
+            console.log('Twilio webhook listening on', port);
+        });
     };
 
 })();
